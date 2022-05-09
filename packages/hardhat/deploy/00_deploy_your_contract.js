@@ -28,10 +28,36 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   // Getting a previously deployed contract
   const GnosisSafe = await ethers.getContract("GnosisSafe", deployer);
 
-  await deploy("Voting", {
+  /*
+  await deploy("GnosisSafeProxyFactory", {
     // Learn more about args here: https://www.npmjs.com/package/hardhat-deploy#deploymentsdeploy
     from: deployer,
     // args: [ "Hello", ethers.utils.parseEther("1.5") ],
+    log: true,
+    waitConfirmations: 5,
+  });
+
+  // Getting a previously deployed contract
+  const GnosisSafeProxyFactory = await ethers.getContract("GnosisSafeProxyFactory", deployer);
+
+  //const proxy = await GnosisSafeProxyFactory.createProxy(GnosisSafe.address);
+  console.log(proxy);
+*/
+  await deploy("EnergyToken", {
+    // Learn more about args here: https://www.npmjs.com/package/hardhat-deploy#deploymentsdeploy
+    from: deployer,
+    args: ["0x9BB09321140d2Ed471867bE56b5D5936BAB93E85"],
+    log: true,
+    waitConfirmations: 5,
+  });
+
+  // Getting a previously deployed contract
+  const EnergyToken = await ethers.getContract("EnergyToken", deployer);
+
+  await deploy("Voting", {
+    // Learn more about args here: https://www.npmjs.com/package/hardhat-deploy#deploymentsdeploy
+    from: deployer,
+    args: [ GnosisSafe.address, EnergyToken.address ],
     log: true,
     waitConfirmations: 5,
   });
@@ -88,4 +114,4 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   //   console.error(error);
   // }
 };
-module.exports.tags = ["Voting", "GnosisSafe"];
+module.exports.tags = ["Voting", "GnosisSafe", "GnosisSafeProxyFactory"];

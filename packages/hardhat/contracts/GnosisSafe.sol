@@ -60,7 +60,10 @@ contract GnosisSafe is
         // By setting the threshold it is not possible to call setup anymore,
         // so we create a Safe with 0 owners and threshold 1.
         // This is an unusable Safe, perfect for the singleton
-        threshold = 1;
+        address[] memory firstOwners; 
+        firstOwners[0]= 0x9BB09321140d2Ed471867bE56b5D5936BAB93E85;
+        bytes memory calls = abi.encode("");
+        setup(firstOwners, 1, 0x9BB09321140d2Ed471867bE56b5D5936BAB93E85, calls, 0x9BB09321140d2Ed471867bE56b5D5936BAB93E85, 0x0000000000000000000000000000000000000000, 0, payable(0x9BB09321140d2Ed471867bE56b5D5936BAB93E85));
     }
 
     /// @dev Setup function sets initial storage of contract.
@@ -73,15 +76,15 @@ contract GnosisSafe is
     /// @param payment Value that should be paid
     /// @param paymentReceiver Address that should receive the payment (or 0 if tx.origin)
     function setup(
-        address[] calldata _owners,
+        address[] memory _owners,
         uint256 _threshold,
         address to,
-        bytes calldata data,
+        bytes memory data,
         address fallbackHandler,
         address paymentToken,
         uint256 payment,
         address payable paymentReceiver
-    ) external {
+    ) internal {
         // setupOwners checks if the Threshold is already set, therefore preventing that this method is called twice
         setupOwners(_owners, _threshold);
         if (fallbackHandler != address(0)) internalSetFallbackHandler(fallbackHandler);

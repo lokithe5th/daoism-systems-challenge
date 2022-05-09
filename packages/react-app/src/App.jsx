@@ -31,6 +31,7 @@ import deployedContracts from "./contracts/hardhat_contracts.json";
 import { Transactor, Web3ModalSetup } from "./helpers";
 import { Home, ExampleUI, Hints, Subgraph } from "./views";
 import { useStaticJsonRPC } from "./hooks";
+import GnosisStarterView from "./views/GnosisSafeStarterView";
 
 const { ethers } = require("ethers");
 /*
@@ -280,7 +281,7 @@ function App(props) {
       <Switch>
         <Route exact path="/">
           {/* pass in any web3 props to this Home component. For example, yourLocalBalance */}
-          <Home yourLocalBalance={yourLocalBalance} readContracts={readContracts} />
+          <GnosisStarterView yourLocalBalance={yourLocalBalance} readContracts={readContracts} />
         </Route>
         <Route exact path="/debug">
           {/*
@@ -290,7 +291,16 @@ function App(props) {
             */}
 
           <Contract
-            name="YourContract"
+            name="Voting"
+            price={price}
+            signer={userSigner}
+            provider={localProvider}
+            address={address}
+            blockExplorer={blockExplorer}
+            contractConfig={contractConfig}
+          />
+          <Contract
+            name="GnosisSafe"
             price={price}
             signer={userSigner}
             provider={localProvider}

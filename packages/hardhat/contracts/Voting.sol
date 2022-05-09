@@ -12,16 +12,12 @@ interface IGnosis {
     function removeOwner(address prevOwner, address owner, uint256 _threshold) external; 
 }*/
 
-import "./BalancerStake.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract Voting is BalancerStake {
+contract Voting {
 
     address public safeAddress;
-
-    struct Voter {
-        bool voted;     // has voted
-        uint256 vote;   // tracks index of proposal voted for
-    }
+    IERC20 public balancerPoolToken;
 
     struct Proposal {
         address target;    //  name of proposal
@@ -31,9 +27,6 @@ contract Voting is BalancerStake {
         bytes proposal;
         bool executed;      //  false -> not executed, true -> already executed
     }
-
-    // Is this needed? Can an address not be checked when voting?
-    mapping(address => Voter) public voters;
 
     //  Mapping of index => address => weight
     mapping(uint256 => mapping(address => uint256)) public votesByProposalIndexByStaker;
@@ -47,8 +40,9 @@ contract Voting is BalancerStake {
     /// @return bool true if passed, false if failed
     function vote(uint256 proposalIndex) public onlyStakers(msg.sender) returns (bool) {
         require(proposalIndex < proposals.length, "Invalid proposalIndex");
-        require(votesByProposalIndexByStaker[proposalIndex][msg.sender]==0, "Already voted");
+        require(votesByProposalIndexByStaker[proposalIndex][msg.sender]== 0, "Already voted");
         votesByProposalIndex[proposalIndex] = votesByProposalIndex[proposalIndex] + (balancerPoolToken.balanceOf(msg.sender)/balancerPoolToken.totalSupply());
+        //  If total votes > 50% of stakers then execute the proposal 
         if (votesByProposalIndex[proposalIndex] > (balancerPoolToken.totalSupply()/2)) {
             executeProposal(proposalIndex, proposals[proposalIndex].value);
             proposals[proposalIndex].executed = true;
@@ -122,15 +116,25 @@ contract Voting is BalancerStake {
     }
     */
 
-    function executeProposal(uint256 proposalIndex, uint256 value) public returns (bytes memory) {
-        require(!proposals[proposalIndex].executed, "already executed");
-        (bool success, bytes memory result) = proposals[proposalIndex].target.call{value: value}(proposals[proposalIndex].proposal);
-        require(success, "execution failed");
-        return result;
+    function executeProposal(
+        uint256 proposalIndex, 
+        uint256 value
+        ) 
+        public returns (bytes memory) 
+        {
+            require(!proposals[proposalIndex].executed, "already executed");
+            (bool success, bytes memory result) = proposals[proposalIndex].target.call{value: value}(proposals[proposalIndex].proposal);
+            require(success, "execution failed");
+            return result;
     }
 
-    constructor() {
+    constructor(address _safeAddress, address _bpt) {
+        setBalancerPoolToken(_bpt);
+        safeAddress = _safeAddress;
+    }
 
+    function setBalancerPoolToken(address _bpt) internal {
+        balancerPoolToken = IERC20(_bpt);
     }
 
     modifier onlyStakers(address _voter) {
