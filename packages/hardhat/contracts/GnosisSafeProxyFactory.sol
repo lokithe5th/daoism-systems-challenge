@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity >=0.7.0 <0.9.0;
 
-import "./GnosisSafeProxy.sol";
-import "./IProxyCreationCallback.sol";
+import "./proxies/GnosisSafeProxy.sol";
+import "./proxies/IProxyCreationCallback.sol";
+import "hardhat/console.sol";
 
 /// @title Proxy Factory - Allows to create new proxy contact and execute a message call to the new proxy within one transaction.
 /// @author Stefan George - <stefan@gnosis.pm>
@@ -22,6 +23,7 @@ contract GnosisSafeProxyFactory {
                 }
             }
         emit ProxyCreation(proxy, singleton);
+        console.logAddress(address(proxy));
     }
 
     /// @dev Allows to retrieve the runtime code of a deployed Proxy. This can be used to check that the expected Proxy was deployed.

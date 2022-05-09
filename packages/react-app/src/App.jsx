@@ -149,6 +149,11 @@ function App(props) {
   // Load in your local 📝 contract and read a value from it:
   const readContracts = useContractLoader(localProvider, contractConfig);
 
+  const contractConfigProxy = { "GnosisSafe": "0xcafac3dd18ac6c6e92c921884f9e4176737c052c"};
+
+  const readProxy = useContractLoader(localProvider, contractConfigProxy );
+  console.log(readProxy);
+
   // If you want to make 🔐 write transactions to your contracts, use the userSigner:
   const writeContracts = useContractLoader(userSigner, contractConfig, localChainId);
 
@@ -166,6 +171,9 @@ function App(props) {
   const myMainnetDAIBalance = useContractReader(mainnetContracts, "DAI", "balanceOf", [
     "0x34aA3F359A9D614239015126635CE7732c18fDF3",
   ]);
+
+  const proxies = useContractReader(readContracts, "GnosisSafe", "getOwners()");
+  console.log(proxies);
 
   // keep track of a variable from the contract in the local React state:
   const purpose = useContractReader(readContracts, "YourContract", "purpose");
@@ -281,7 +289,7 @@ function App(props) {
       <Switch>
         <Route exact path="/">
           {/* pass in any web3 props to this Home component. For example, yourLocalBalance */}
-          <GnosisStarterView yourLocalBalance={yourLocalBalance} readContracts={readContracts} />
+          <GnosisStarterView yourLocalBalance={yourLocalBalance} readContracts={readContracts}  />
         </Route>
         <Route exact path="/debug">
           {/*
@@ -301,6 +309,24 @@ function App(props) {
           />
           <Contract
             name="GnosisSafe"
+            price={price}
+            signer={userSigner}
+            provider={localProvider}
+            address={address}
+            blockExplorer={blockExplorer}
+            contractConfig={contractConfig}
+          />
+          <Contract
+            name="GnosisSafeProxyFactory"
+            price={price}
+            signer={userSigner}
+            provider={localProvider}
+            address={address}
+            blockExplorer={blockExplorer}
+            contractConfig={contractConfig}
+          />
+          <Contract
+            name="EnergyToken"
             price={price}
             signer={userSigner}
             provider={localProvider}

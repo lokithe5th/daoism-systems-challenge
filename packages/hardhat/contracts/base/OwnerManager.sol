@@ -64,14 +64,13 @@ contract OwnerManager is SelfAuthorized {
     /// @dev Allows to remove an owner from the Safe and update the threshold at the same time.
     ///      This can only be done via a Safe transaction.
     /// @notice Removes the owner `owner` from the Safe and updates the threshold to `_threshold`.
-    /// @param prevOwner Owner that pointed to the owner to be removed in the linked list
     /// @param owner Owner address to be removed.
     /// @param _threshold New threshold.
     function removeOwner(
-        address prevOwner,
         address owner,
         uint256 _threshold
     ) public {
+        address prevOwner = getPrevOwner(owner);
         // Only allow to remove an owner, if threshold can still be reached.
         require(ownerCount - 1 >= _threshold, "GS201");
         // Validate owner address and check that it corresponds to owner index.
@@ -88,14 +87,13 @@ contract OwnerManager is SelfAuthorized {
     /// @dev Allows to swap/replace an owner from the Safe with another address.
     ///      This can only be done via a Safe transaction.
     /// @notice Replaces the owner `oldOwner` in the Safe with `newOwner`.
-    /// @param prevOwner Owner that pointed to the owner to be replaced in the linked list
     /// @param oldOwner Owner address to be replaced.
     /// @param newOwner New owner address.
     function swapOwner(
-        address prevOwner,
         address oldOwner,
         address newOwner
     ) public {
+        address prevOwner = getPrevOwner(oldOwner);
         // Owner address cannot be null, the sentinel or the Safe itself.
         require(newOwner != address(0) && newOwner != SENTINEL_OWNERS && newOwner != address(this), "GS203");
         // No duplicate owners allowed.
@@ -146,4 +144,25 @@ contract OwnerManager is SelfAuthorized {
         }
         return array;
     }
+
+
+    /// @notice Additional function to get previous owner from owners mapping
+    /// @dev Uses standard getOwners() logic to reduce params requirements in contract interactions
+    /// @param _ownerToBeRemoved:address that is to be removed
+    function getPrevOwner(address _ownerToBeRemoved) internal view returns (address) {
+        address[] memory array = new address[](ownerCount);
+        address currentOwner = owners[SENTINEL_OWNERS];
+        uint256 index = 0;
+        while (currentOwner != SENTINEL_OWNERS) {
+            array[index] = currentOwner;
+            currentOwner = owners[currentOwner];
+            if (owners[currentOwner]== _ownerToBeRemoved) {
+                return currentOwner;
+            }
+            index++;
+        }
+        return address(0);
+        
+    }
+
 }

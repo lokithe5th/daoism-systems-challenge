@@ -40,9 +40,23 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   // Getting a previously deployed contract
   const GnosisSafeProxyFactory = await ethers.getContract("GnosisSafeProxyFactory", deployer);
 
-  //const proxy = await GnosisSafeProxyFactory.createProxy(GnosisSafe.address);
-  console.log(proxy);
+  //const {ProxyAddress} = await GnosisSafeProxyFactory.createProxy(GnosisSafe.address, 0x30);
 */
+  
+  /*await deploy("GnosisSafeProxyFactory", {
+    // Learn more about args here: https://www.npmjs.com/package/hardhat-deploy#deploymentsdeploy
+    from: deployer,
+    // args: [ "Hello", ethers.utils.parseEther("1.5") ],
+    log: true,
+    waitConfirmations: 5,
+  });
+
+  // Getting a previously deployed contract
+  const GnosisSafeProxyFactory = await ethers.getContract("GnosisSafeProxyFactory", deployer);
+*/
+  //const proxy = await GnosisSafeProxyFactory.createProxy(GnosisSafe.address, "0x6164644f776e6572576974685468726573686f6c6428616464726573732c2075696e74323536292c203078394242303933323131343064324564343731383637624535366235443539333642414239334538352c2031");
+  //console.log(proxy);
+
   await deploy("EnergyToken", {
     // Learn more about args here: https://www.npmjs.com/package/hardhat-deploy#deploymentsdeploy
     from: deployer,
@@ -54,16 +68,20 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   // Getting a previously deployed contract
   const EnergyToken = await ethers.getContract("EnergyToken", deployer);
 
+  //console.log("ProxyAddress: "+ProxyAddress);
+
   await deploy("Voting", {
     // Learn more about args here: https://www.npmjs.com/package/hardhat-deploy#deploymentsdeploy
     from: deployer,
-    args: [ GnosisSafe.address, EnergyToken.address ],
+    args: [ EnergyToken.address , GnosisSafe.address ],
     log: true,
     waitConfirmations: 5,
   });
 
   // Getting a previously deployed contract
   const Voting = await ethers.getContract("Voting", deployer);
+
+  await GnosisSafe.setup(["0x9BB09321140d2Ed471867bE56b5D5936BAB93E85"], 1, "0x9BB09321140d2Ed471867bE56b5D5936BAB93E85", 0x30, Voting.address, EnergyToken.address, 0, "0x9BB09321140d2Ed471867bE56b5D5936BAB93E85");
 
   /*  await YourContract.setPurpose("Hello");
   
@@ -114,4 +132,4 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   //   console.error(error);
   // }
 };
-module.exports.tags = ["Voting", "GnosisSafe", "GnosisSafeProxyFactory"];
+module.exports.tags = ["Voting", "GnosisSafe", "EnergyToken"];

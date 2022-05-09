@@ -28,10 +28,10 @@ export default function GnosisStarterView({
   const [data, setData] = useState('0x00')
 
   const OWNERS = [
-    "0x34aA3F359A9D614239015126635CE7732c18fDF3",
-    "0xa81a6a910FeD20374361B35C451a4a44F86CeD46"
+    "0x9BB09321140d2Ed471867bE56b5D5936BAB93E85",
+    "0x809F55D088872FFB148F86b5C21722CAa609Ac72"
   ]
-  const THRESHOLD = 2
+  const THRESHOLD = 1
 
   const [safeAddress, setSafeAddress] = useLocalStorage("deployedSafe")
   const [ deploying, setDeploying ] = useState()

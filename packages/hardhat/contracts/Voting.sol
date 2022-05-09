@@ -6,13 +6,16 @@ pragma solidity >=0.8.0 <0.9.0;
 /// @notice Allows addresses which have a stake in Balancer pool to vote on proposed add/remove actions on GnosisSafe
 /// @dev    
 
-/* Preferred method of making calls, but to allow arbitrary proposal execution
+//Preferred method of making calls, but to allow arbitrary proposal execution
 interface IGnosis {
+    function getOwners() external;
     function addOwnerWithThreshold(address owner, uint256 _threshold) external;
-    function removeOwner(address prevOwner, address owner, uint256 _threshold) external; 
-}*/
+    function removeOwner(address owner, uint256 _threshold) external;
+    function getPrevOwner(address _ownerToBeRemoved) external; 
+}
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "hardhat/console.sol";
 
 contract Voting {
 
@@ -25,12 +28,14 @@ contract Voting {
         uint256 voteCount;  //  number of votes (taking into account weighting)
         uint256 value;
         bytes proposal;
-        bool executed;      //  false -> not executed, true -> already executed
+        bool passed;      //  false -> not executed, true -> already executed
+        bool voteEnded;
     }
 
     //  Mapping of index => address => weight
     mapping(uint256 => mapping(address => uint256)) public votesByProposalIndexByStaker;
-    mapping(uint256 => uint256) public votesByProposalIndex;
+    mapping(uint256 => uint256) public votesForProposalByIndex;
+    mapping(uint256 => uint256) public votesAgainstProposalByIndex;
 
     Proposal[] public proposals;
 
@@ -38,16 +43,32 @@ contract Voting {
     /// @dev    Only stakers may vote, if passed a proposal will be executed
     /// @param  proposalIndex:uint256 The index of the proposal being voted on 
     /// @return bool true if passed, false if failed
-    function vote(uint256 proposalIndex) public onlyStakers(msg.sender) returns (bool) {
+    function vote(uint256 proposalIndex, uint8 voteType) public onlyStakers(msg.sender) returns (bool) {
         require(proposalIndex < proposals.length, "Invalid proposalIndex");
+        require(voteType < 2, "Invalid voteType");
         require(votesByProposalIndexByStaker[proposalIndex][msg.sender]== 0, "Already voted");
-        votesByProposalIndex[proposalIndex] = votesByProposalIndex[proposalIndex] + (balancerPoolToken.balanceOf(msg.sender)/balancerPoolToken.totalSupply());
-        //  If total votes > 50% of stakers then execute the proposal 
-        if (votesByProposalIndex[proposalIndex] > (balancerPoolToken.totalSupply()/2)) {
-            executeProposal(proposalIndex, proposals[proposalIndex].value);
-            proposals[proposalIndex].executed = true;
-            return true;
+        
+        if (voteType == 0) {
+            votesByProposalIndexByStaker[proposalIndex][msg.sender] = balancerPoolToken.balanceOf(msg.sender);
+            votesForProposalByIndex[proposalIndex] = balancerPoolToken.balanceOf(msg.sender);
+            console.logUint(votesForProposalByIndex[proposalIndex]);
+        } else {
+            votesByProposalIndexByStaker[proposalIndex][msg.sender] = balancerPoolToken.balanceOf(msg.sender);
+            votesAgainstProposalByIndex[proposalIndex] = balancerPoolToken.balanceOf(msg.sender);
+            console.logUint(votesAgainstProposalByIndex[proposalIndex]);
         }
+        
+        //  If total votes > 50% of stakers then execute the proposal 
+        if (votesForProposalByIndex[proposalIndex] > (balancerPoolToken.totalSupply()/2)) {
+            console.log("In Vote => Execution logic");
+            executeProposal(proposalIndex, proposals[proposalIndex].value);
+            proposals[proposalIndex].passed = true;
+            
+            return true;
+        } else if (votesAgainstProposalByIndex[proposalIndex] > (balancerPoolToken.totalSupply()/2)) {
+            proposals[proposalIndex].voteEnded = true;
+        }
+
         return false;
     }
 
@@ -87,9 +108,9 @@ contract Voting {
             bytes memory proposalPacked;
             require(actionType < 4, "Invalid action");
             if (actionType == 0) {
-                proposalPacked = abi.encode("addOwnerWithThreshold(address, uint256),",target,",",threshold);
+                proposalPacked = abi.encodePacked("addOwnerWithThreshold(address, uint256),",target,",",threshold);
             } else if (actionType == 2) {
-                proposalPacked = abi.encode("removeOwner(address, uint256),",target,",",threshold);
+                proposalPacked = abi.encodePacked("removeOwner(address, uint256),",target,",",threshold);
             } else {
                 proposalPacked = abi.encode(proposalBytes);
             }
@@ -100,9 +121,10 @@ contract Voting {
                 voteCount: 0,
                 value: proposalValue,
                 proposal: proposalPacked,
-                executed: false
+                passed: false,
+                voteEnded: false
             }));
-
+            console.log("Proposal submitted");
             return proposals.length - 1;
     }
 
@@ -120,21 +142,40 @@ contract Voting {
         uint256 proposalIndex, 
         uint256 value
         ) 
-        public returns (bytes memory) 
+        internal returns (bool) 
         {
-            require(!proposals[proposalIndex].executed, "already executed");
+            console.log("Starting execProp internal fx");
+            require(!proposals[proposalIndex].voteEnded, "already ended");
+            if (proposals[proposalIndex].action == 0) {
+                IGnosis(safeAddress).addOwnerWithThreshold(proposals[proposalIndex].target, 1);
+                proposals[proposalIndex].voteEnded = true;
+                return true;
+            } else if (proposals[proposalIndex].action == 1) {
+                IGnosis(safeAddress).removeOwner(proposals[proposalIndex].target, 1);
+                proposals[proposalIndex].voteEnded = true;
+                return true;
+            } 
+            
             (bool success, bytes memory result) = proposals[proposalIndex].target.call{value: value}(proposals[proposalIndex].proposal);
             require(success, "execution failed");
-            return result;
+            proposals[proposalIndex].voteEnded = true;
+            console.log("Ending execProp internal fx");
+            return true;
     }
 
-    constructor(address _safeAddress, address _bpt) {
+    constructor(address _bpt, address _safeAddress) {
         setBalancerPoolToken(_bpt);
         safeAddress = _safeAddress;
     }
 
-    function setBalancerPoolToken(address _bpt) internal {
+    function setSafeAddress(address _safeAddress) public {
+        safeAddress = _safeAddress;
+        console.logAddress(safeAddress);
+    }
+
+    function setBalancerPoolToken(address _bpt) public {
         balancerPoolToken = IERC20(_bpt);
+        console.logAddress(address(balancerPoolToken));
     }
 
     modifier onlyStakers(address _voter) {

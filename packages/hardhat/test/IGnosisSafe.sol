@@ -60,7 +60,7 @@ contract GnosisSafe is
         // By setting the threshold it is not possible to call setup anymore,
         // so we create a Safe with 0 owners and threshold 1.
         // This is an unusable Safe, perfect for the singleton
-        threshold = 0;
+        threshold = 1;
     }
 
     /// @dev Setup function sets initial storage of contract.
@@ -419,6 +419,4 @@ contract GnosisSafe is
     ) public view returns (bytes32) {
         return keccak256(encodeTransactionData(to, value, data, operation, safeTxGas, baseGas, gasPrice, gasToken, refundReceiver, _nonce));
     }
-
-    
 }
