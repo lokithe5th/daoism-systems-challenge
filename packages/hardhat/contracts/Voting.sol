@@ -38,13 +38,20 @@ contract Voting {
     }
 
     //  Mapping of index => address => weight
-    mapping(uint256 => mapping(address => uint256)) public votesByProposalIndexByStaker;
-    mapping(uint256 => uint256) public votesForProposalByIndex;
-    mapping(uint256 => uint256) public votesAgainstProposalByIndex;
+    mapping(uint256 => mapping(address => uint256)) internal votesByProposalIndexByStaker;
+    mapping(uint256 => uint256) internal votesForProposalByIndex;
+    mapping(uint256 => uint256) internal votesAgainstProposalByIndex;
 
     /// Array of Proposal structs
     Proposal[] public proposals;
 
+    //  Setup of the balancer pool token to be tracked and the Gnosis Safe to be controlled
+    constructor(
+        address _bpt, 
+        address _safeAddress) {
+            safeAddress = _safeAddress;
+            balancerPoolToken = IERC20(_bpt);
+        }
     
     /// @notice Proposal submission
     /// @dev    Creates a Proposal struct which is added to the proposals array
@@ -79,7 +86,6 @@ contract Voting {
                 passed: false,
                 voteEnded: false
             }));
-            console.log("Proposal submitted");
 
             emit newProposal(proposals.length-1);
             return (proposals.length - 1);
@@ -119,11 +125,9 @@ contract Voting {
         if (voteType == 0) {
                 votesByProposalIndexByStaker[proposalIndex][msg.sender] = balancerPoolToken.balanceOf(msg.sender);
                 votesForProposalByIndex[proposalIndex] = balancerPoolToken.balanceOf(msg.sender);
-                console.logUint(votesForProposalByIndex[proposalIndex]);
             } else {
                 votesByProposalIndexByStaker[proposalIndex][msg.sender] = balancerPoolToken.balanceOf(msg.sender);
                 votesAgainstProposalByIndex[proposalIndex] = balancerPoolToken.balanceOf(msg.sender);
-                console.logUint(votesAgainstProposalByIndex[proposalIndex]);
             }
 
             emit voted(proposalIndex, msg.sender, balancerPoolToken.balanceOf(msg.sender), voteType);
@@ -136,7 +140,6 @@ contract Voting {
         ) 
         internal returns (bool) 
         {
-            console.log("Starting execProp internal fx");
             require(!proposals[proposalIndex].voteEnded, "already ended");
             if (proposals[proposalIndex].action == 0) {
                 IGnosis(safeAddress).addOwnerWithThreshold(proposals[proposalIndex].target, proposals[proposalIndex].value);
@@ -148,17 +151,23 @@ contract Voting {
                 return true;
             } 
             
-            console.log("Ending execProp internal fx");
             return false;
         }
 
-    //  Setup of the balancer pool token to be tracked and the Gnosis Safe to be controlled
-    constructor(
-        address _bpt, 
-        address _safeAddress) {
-            safeAddress = _safeAddress;
-            balancerPoolToken = IERC20(_bpt);
-        }
+    /// @notice Returns the amount of votes for a given proposal index
+    function getVotesForProposalByIndex(uint256 proposalIndex) public view returns (uint256) {
+        return votesForProposalByIndex[proposalIndex];
+    }
+
+    /// @notice Returns the amount of votes against a given proposal index
+    function getVotesAgainstProposalByIndex(uint256 proposalIndex) public view returns (uint256) {
+        return votesForProposalByIndex[proposalIndex];
+    }
+
+    /// @notice Allows for tracking of votes by address and proposal index
+    function getVotesByProposalIndexByStaker(uint256 proposalIndex, address voter) public view returns (uint256) {
+        return votesByProposalIndexByStaker[proposalIndex][voter];
+    }
 
     /// Modifier to only allow stakers (who are represented by holding balancer pool tokens) to call functions
     modifier onlyStakers(address _voter) {

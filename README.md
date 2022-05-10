@@ -31,7 +31,8 @@ The happy path simulation can be run through `yarn test`. The flow can be repres
 
 ## Testnet Deployment  
 
-The verified contracts can be found on the Rinkeby testnet.
+The verified contracts can be found on the Rinkeby testnet.  
+
 [Voting.sol]()  
 [GnosisSafe.sol]()  
 [BalancerPoolToken.sol]()  
