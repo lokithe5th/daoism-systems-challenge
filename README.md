@@ -3,7 +3,7 @@
 
 This repo contains the completed code for the backend/smart contracts portion of the Daoism Systems technical challenge.
 
-## introduction  
+## Introduction  
 
 The contracts were developed with scaffold-eth to enable faster prototyping and reduce development time. This approach allows easy installation on a local machine. 
 
