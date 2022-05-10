@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity >=0.7.0 <0.9.0;
 
-import "./proxies/GnosisSafeProxy.sol";
-import "./proxies/IProxyCreationCallback.sol";
+import "./GnosisSafeProxy.sol";
+import "./IProxyCreationCallback.sol";
 import "hardhat/console.sol";
 
 /// @title Proxy Factory - Allows to create new proxy contact and execute a message call to the new proxy within one transaction.

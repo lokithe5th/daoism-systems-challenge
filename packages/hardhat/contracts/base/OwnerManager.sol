@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity >=0.7.0 <0.9.0;
 import "../common/SelfAuthorized.sol";
+import "hardhat/console.sol";
 
 /// @title OwnerManager - Manages a set of owners and a threshold to perform actions.
 /// @author Stefan George - <stefan@gnosis.pm>
@@ -150,19 +151,18 @@ contract OwnerManager is SelfAuthorized {
     /// @dev Uses standard getOwners() logic to reduce params requirements in contract interactions
     /// @param _ownerToBeRemoved:address that is to be removed
     function getPrevOwner(address _ownerToBeRemoved) internal view returns (address) {
-        address[] memory array = new address[](ownerCount);
-        address currentOwner = owners[SENTINEL_OWNERS];
-        uint256 index = 0;
-        while (currentOwner != SENTINEL_OWNERS) {
-            array[index] = currentOwner;
-            currentOwner = owners[currentOwner];
-            if (owners[currentOwner]== _ownerToBeRemoved) {
+        address temp = address(0);
+
+        address currentOwner = owners[SENTINEL_OWNERS]; // currentOwner becomes start of loop
+        while (currentOwner != SENTINEL_OWNERS) {       // currentOwner is not the last address in linked list
+            temp = owners[currentOwner];                        
+            if (temp == _ownerToBeRemoved) {
+                console.logAddress(currentOwner);
                 return currentOwner;
             }
-            index++;
+            currentOwner = owners[currentOwner];
         }
-        return address(0);
-        
+        return currentOwner;
     }
 
 }

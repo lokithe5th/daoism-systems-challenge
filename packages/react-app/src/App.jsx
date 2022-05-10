@@ -317,16 +317,7 @@ function App(props) {
             contractConfig={contractConfig}
           />
           <Contract
-            name="GnosisSafeProxyFactory"
-            price={price}
-            signer={userSigner}
-            provider={localProvider}
-            address={address}
-            blockExplorer={blockExplorer}
-            contractConfig={contractConfig}
-          />
-          <Contract
-            name="EnergyToken"
+            name="BalancerPoolToken"
             price={price}
             signer={userSigner}
             provider={localProvider}

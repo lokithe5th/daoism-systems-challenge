@@ -57,23 +57,23 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   //const proxy = await GnosisSafeProxyFactory.createProxy(GnosisSafe.address, "0x6164644f776e6572576974685468726573686f6c6428616464726573732c2075696e74323536292c203078394242303933323131343064324564343731383637624535366235443539333642414239334538352c2031");
   //console.log(proxy);
 
-  await deploy("EnergyToken", {
+  await deploy("BalancerPoolToken", {
     // Learn more about args here: https://www.npmjs.com/package/hardhat-deploy#deploymentsdeploy
     from: deployer,
-    args: ["0x9BB09321140d2Ed471867bE56b5D5936BAB93E85"],
+    args: ["0x9BB09321140d2Ed471867bE56b5D5936BAB93E85","0x507bD2EA0737394A2d859E10A0FA192C3d32E627"],
     log: true,
     waitConfirmations: 5,
   });
 
   // Getting a previously deployed contract
-  const EnergyToken = await ethers.getContract("EnergyToken", deployer);
+  const BalancerPoolToken = await ethers.getContract("BalancerPoolToken", deployer);
 
   //console.log("ProxyAddress: "+ProxyAddress);
 
   await deploy("Voting", {
     // Learn more about args here: https://www.npmjs.com/package/hardhat-deploy#deploymentsdeploy
     from: deployer,
-    args: [ EnergyToken.address , GnosisSafe.address ],
+    args: [ BalancerPoolToken.address , GnosisSafe.address ],
     log: true,
     waitConfirmations: 5,
   });
@@ -81,7 +81,7 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   // Getting a previously deployed contract
   const Voting = await ethers.getContract("Voting", deployer);
 
-  await GnosisSafe.setup(["0x9BB09321140d2Ed471867bE56b5D5936BAB93E85"], 1, "0x9BB09321140d2Ed471867bE56b5D5936BAB93E85", 0x30, Voting.address, EnergyToken.address, 0, "0x9BB09321140d2Ed471867bE56b5D5936BAB93E85");
+  await GnosisSafe.setup(["0x9BB09321140d2Ed471867bE56b5D5936BAB93E85"], 1, "0x9BB09321140d2Ed471867bE56b5D5936BAB93E85", 0x30, Voting.address, BalancerPoolToken.address, 0, "0x9BB09321140d2Ed471867bE56b5D5936BAB93E85");
 
   /*  await YourContract.setPurpose("Hello");
   
@@ -132,4 +132,4 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   //   console.error(error);
   // }
 };
-module.exports.tags = ["Voting", "GnosisSafe", "EnergyToken"];
+module.exports.tags = ["Voting", "GnosisSafe", "BalancerPoolToken"];

@@ -52,7 +52,26 @@ contract Voting {
             require(voteType < 2, "Invalid voteType");
             require(votesByProposalIndexByStaker[proposalIndex][msg.sender]== 0, "Already voted");
         
-            if (voteType == 0) {
+            //  Voting logic
+            countVotes(proposalIndex, voteType);
+
+            //  If total votes > 50% of stakers then execute the proposal 
+            if (votesForProposalByIndex[proposalIndex] > (balancerPoolToken.totalSupply()/2)) {
+                console.log("In Vote => Execution logic");
+                executeProposal(proposalIndex);
+                proposals[proposalIndex].passed = true;
+                return true;
+
+            } else if (votesAgainstProposalByIndex[proposalIndex] > (balancerPoolToken.totalSupply()/2)) {
+                proposals[proposalIndex].voteEnded = true;
+                return false;
+            }
+
+            return false;
+        }
+
+    function countVotes(uint256 proposalIndex, uint8 voteType) internal {
+        if (voteType == 0) {
                 votesByProposalIndexByStaker[proposalIndex][msg.sender] = balancerPoolToken.balanceOf(msg.sender);
                 votesForProposalByIndex[proposalIndex] = balancerPoolToken.balanceOf(msg.sender);
                 console.logUint(votesForProposalByIndex[proposalIndex]);
@@ -61,20 +80,7 @@ contract Voting {
                 votesAgainstProposalByIndex[proposalIndex] = balancerPoolToken.balanceOf(msg.sender);
                 console.logUint(votesAgainstProposalByIndex[proposalIndex]);
             }
-
-            //  If total votes > 50% of stakers then execute the proposal 
-            if (votesForProposalByIndex[proposalIndex] > (balancerPoolToken.totalSupply()/2)) {
-                console.log("In Vote => Execution logic");
-                executeProposal(proposalIndex);
-                proposals[proposalIndex].passed = true;
-
-                return true;
-            } else if (votesAgainstProposalByIndex[proposalIndex] > (balancerPoolToken.totalSupply()/2)) {
-                proposals[proposalIndex].voteEnded = true;
-            }
-
-            return false;
-        }
+    }
 
     /// @notice Proposal submission
     /// @dev    Creates a Proposal struct which is added to the proposals array
