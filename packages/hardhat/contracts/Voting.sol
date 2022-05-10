@@ -19,7 +19,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "hardhat/console.sol";
 
 contract Voting {
-    event newProposal(uint256 proposalIndex, address sponsor);
+    event newProposal(uint256 proposalIndex);
     event voted(uint256 proposalIndex, address voter, uint256 votes, uint8 voteType);
     event addSigner(address newSigner);
     event removeSigner(address removedSigner);
@@ -81,8 +81,8 @@ contract Voting {
             }));
             console.log("Proposal submitted");
 
-            emit newProposal(proposals.length-1, msg.sender);
-            return proposals.length - 1;
+            emit newProposal(proposals.length-1);
+            return (proposals.length - 1);
         }
 
     /// @notice Vote logic
