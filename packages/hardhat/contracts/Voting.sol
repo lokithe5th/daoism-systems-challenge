@@ -19,6 +19,10 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "hardhat/console.sol";
 
 contract Voting {
+    event newProposal(uint256 proposalIndex, address sponsor);
+    event voted(uint256 proposalIndex, address voter, uint256 votes, uint8 voteType);
+    event addSigner(address newSigner);
+    event removeSigner(address removedSigner);
 
     address public safeAddress;
     IERC20 public balancerPoolToken;
@@ -28,7 +32,7 @@ contract Voting {
         uint8 action;       // 0 -> addSigner, 1 -> removeSigner, 2 -> arbitrary tx
         uint256 voteCount;  // Number of votes cast
         uint256 value;      // Value to be paid, 0 for action == 0 || == 1
-        bytes proposal;     // Bytes representation of proposal, 0x30 if action == 0 || == 1
+        string proposal;     // Bytes representation of proposal, 0x30 if action == 0 || == 1
         bool passed;        // false -> unsuccessful, true -> successfull and executed
         bool voteEnded;     // Vote has ended. If voteEnded == true && passed == false, vote was unsuccessful
     }
@@ -38,7 +42,48 @@ contract Voting {
     mapping(uint256 => uint256) public votesForProposalByIndex;
     mapping(uint256 => uint256) public votesAgainstProposalByIndex;
 
+    /// Array of Proposal structs
     Proposal[] public proposals;
+
+    
+    /// @notice Proposal submission
+    /// @dev    Creates a Proposal struct which is added to the proposals array
+    /// @param  target:address to be added, removed or called
+    /// @param  threshold:uint8, the new threshold for Gnosis Safe
+    /// @param  actionType:uint8, if == 0 {add target to safe}, if == 1 {remove target from safe}, else execute arbitrary proposal
+    /// @param  proposalValue:uint256, Value to be sent with call. Should be the new threshold for actionTypes 0 || 1
+    /// @param  proposal:string, to be encoded proposal for arbitrary call execution
+    /// @return uint256 The newly submitted proposal's index
+    function submitProposal(
+        address target, 
+        uint8 threshold, 
+        uint8 actionType, 
+        uint256 proposalValue, 
+        string memory proposal
+        ) public returns (uint256) {
+            require(actionType < 3, "Invalid action");
+
+            uint256 _value;
+            if (actionType == 0 || actionType == 1) {
+                _value = threshold;
+            } else {
+                _value = proposalValue;
+            }
+         
+            proposals.push(Proposal({
+                target: target,
+                action: actionType,
+                voteCount: 0,
+                value: _value,
+                proposal: proposal,
+                passed: false,
+                voteEnded: false
+            }));
+            console.log("Proposal submitted");
+
+            emit newProposal(proposals.length-1, msg.sender);
+            return proposals.length - 1;
+        }
 
     /// @notice Vote logic
     /// @dev    Only stakers may vote, if passed a proposal will be executed, action type determines execution path
@@ -51,22 +96,22 @@ contract Voting {
             require(proposalIndex < proposals.length, "Invalid proposalIndex");
             require(voteType < 2, "Invalid voteType");
             require(votesByProposalIndexByStaker[proposalIndex][msg.sender]== 0, "Already voted");
+            require(!proposals[proposalIndex].voteEnded,"Vote has ended");
         
             //  Voting logic
             countVotes(proposalIndex, voteType);
 
-            //  If total votes > 50% of stakers then execute the proposal 
-            if (votesForProposalByIndex[proposalIndex] > (balancerPoolToken.totalSupply()/2)) {
+            //  If total for votes >= 50% of stakers then execute the proposal 
+            if (votesForProposalByIndex[proposalIndex] >= (balancerPoolToken.totalSupply()/2)) {
                 console.log("In Vote => Execution logic");
-                executeProposal(proposalIndex);
+                require(executeProposal(proposalIndex), "execution failed");
                 proposals[proposalIndex].passed = true;
                 return true;
-
+            //  If total against votes >50%, set voteEnded = true, passed remains false as per default value
             } else if (votesAgainstProposalByIndex[proposalIndex] > (balancerPoolToken.totalSupply()/2)) {
                 proposals[proposalIndex].voteEnded = true;
                 return false;
             }
-
             return false;
         }
 
@@ -80,45 +125,9 @@ contract Voting {
                 votesAgainstProposalByIndex[proposalIndex] = balancerPoolToken.balanceOf(msg.sender);
                 console.logUint(votesAgainstProposalByIndex[proposalIndex]);
             }
-    }
 
-    /// @notice Proposal submission
-    /// @dev    Creates a Proposal struct which is added to the proposals array
-    /// @param  target:address to be added, removed or called
-    /// @param  threshold:uint8, the new threshold for Gnosis Safe
-    /// @param  actionType:uint8, if == 0 {add target to safe}, if == 1 {remove target from safe}, else execute arbitrary proposal
-    /// @param  proposalValue:uint256, Value to be sent with call. Should be 0 for actionTypes 0 || 1
-    /// @param  proposalBytes:bytes, Encoded proposal for arbitrary call execution
-    /// @return uint256 The newly submitted proposal's index
-    function submitProposal(
-        address target, 
-        uint8 threshold, 
-        uint8 actionType, 
-        uint256 proposalValue, 
-        bytes memory proposalBytes
-        ) public returns (uint256) {
-            bytes memory proposalPacked;
-            require(actionType < 4, "Invalid action");
-            if (actionType == 0) {
-                proposalPacked = abi.encodePacked("addOwnerWithThreshold(address, uint256),",target,",",threshold);
-            } else if (actionType == 2) {
-                proposalPacked = abi.encodePacked("removeOwner(address, uint256),",target,",",threshold);
-            } else {
-                proposalPacked = abi.encode(proposalBytes);
-            }
-         
-            proposals.push(Proposal({
-                target: target,
-                action: actionType,
-                voteCount: 0,
-                value: proposalValue,
-                proposal: proposalPacked,
-                passed: false,
-                voteEnded: false
-            }));
-            console.log("Proposal submitted");
-            return proposals.length - 1;
-        }
+            emit voted(proposalIndex, msg.sender, balancerPoolToken.balanceOf(msg.sender), voteType);
+    }
 
     /// @notice Executes a proposal once vote > 50% of totalSupply
     /// @param  proposalIndex:uint256, index of the proposal to be executed
@@ -130,20 +139,17 @@ contract Voting {
             console.log("Starting execProp internal fx");
             require(!proposals[proposalIndex].voteEnded, "already ended");
             if (proposals[proposalIndex].action == 0) {
-                IGnosis(safeAddress).addOwnerWithThreshold(proposals[proposalIndex].target, 1);
+                IGnosis(safeAddress).addOwnerWithThreshold(proposals[proposalIndex].target, proposals[proposalIndex].value);
                 proposals[proposalIndex].voteEnded = true;
                 return true;
             } else if (proposals[proposalIndex].action == 1) {
-                IGnosis(safeAddress).removeOwner(proposals[proposalIndex].target, 1);
+                IGnosis(safeAddress).removeOwner(proposals[proposalIndex].target, proposals[proposalIndex].value);
                 proposals[proposalIndex].voteEnded = true;
                 return true;
             } 
             
-            (bool success, bytes memory result) = proposals[proposalIndex].target.call{value: proposals[proposalIndex].value}(proposals[proposalIndex].proposal);
-            require(success, "execution failed");
-            proposals[proposalIndex].voteEnded = true;
             console.log("Ending execProp internal fx");
-            return true;
+            return false;
         }
 
     //  Setup of the balancer pool token to be tracked and the Gnosis Safe to be controlled
