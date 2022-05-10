@@ -4,7 +4,7 @@ const { solidity } = require("ethereum-waffle");
 
 use(solidity);
 
-describe("Voting Dapp, Simulation: make proposal => vote => addMember", function () {
+describe("Voting Dapp, Happy Path Simulation:", function () {
   let balancerPoolToken;
   let voting;
   let gnosisSafe;
@@ -70,14 +70,11 @@ describe("Voting Dapp, Simulation: make proposal => vote => addMember", function
         .to.emit(voting, "voted")
         .withArgs(0,owner.address, ethers.utils.parseUnits("1000", 18),0);
       
-      expect(await voting.votesForProposalByIndex(0))
-        .to.equal(ethers.utils.parseUnits("1000", 18));
-      
     });
 
     it("Should account for votes", async function () {
       
-      expect(await voting.votesForProposalByIndex(0))
+      expect(await voting.getVotesForProposalByIndex(0))
         .to.equal(ethers.utils.parseUnits("1000", 18));
       
     });
