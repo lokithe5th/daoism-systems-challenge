@@ -9,7 +9,7 @@ The contracts were developed with scaffold-eth to enable faster prototyping and 
 
 To install and run the contracts and front end locally:  
 `yarn install`  
-`yarn run`
+`yarn run`  
 `yarn chain`  
 `yarn deploy`  
 
@@ -17,7 +17,9 @@ To install and run the contracts and front end locally:
 
 ### Voting.sol
 
-The main logic of this app is located in Voting.sol; it holds the logic for 1) making proposals, 2) voting on proposals, 3) to execute token-gated, stake-weighted, predefined addOwner and removeOwner funtions through interfacing with a custom Gnosis Safe implementation 4) recording a history of proposals and votes made for and against those proposals.  
+The main logic of this app is located in Voting.sol; it holds the logic for 1) making proposals, 2) voting on proposals, 3) to execute token-gated, stake-weighted and predefined addOwner and removeOwner funtions through interfacing with a custom Gnosis Safe implementation 4) recording a history of proposals and votes made for and against those proposals.  
+
+It must be noted that, to decrease front-end interaction requirements, once a proposal's votes are more than 50% of the pool token totalSupply, the proposal will be automatically executed. Any voting app like this can be manipulated by buying a majority of the pool tokens and forcing any proposal to be voted on to be passed. Vulnerability against Flash Attacks may exist. *This is merely a technical challenge submission and not for production deployment.* 
 
 `submitProposal(address target, uint8 threshold, uint8 actionType, uint256 proposalValue, string memory proposal)`  
 
@@ -51,7 +53,7 @@ The contract BalancerPoolToken.sol is a simple ERC20 token implementation. The V
 
 ## Happy Path Simulation  
 
-The happy path simulation can be run through `yarn test`. The flow can be represented by submit "addOwner" proposal, vote "for" proposal[0], execute "addOwner", return the array of owners from the Safe (two members), submit "removeOwner" proposal, vote "for" proposal[1], remove Owner from Safe and retrieve array with one member.  
+The happy path simulation can be run through `yarn test`. The flow can be represented by submit "addOwner" proposal -> vote "for" proposal[0] -> execute "addOwner" -> return the array of owners from the Safe (two members) -> submit "removeOwner" proposal -> vote "for" proposal[1] -> remove Owner from Safe -> retrieve array with the one remaining member.  
 
 ## Testnet Deployment  
 
@@ -60,4 +62,9 @@ The verified contracts can be found on the Rinkeby testnet.
 [Voting.sol](https://rinkeby.etherscan.io/address/0x6e88527e1144E93A85Ac02caeeFB99e356950568#code)  
 [GnosisSafe.sol](https://rinkeby.etherscan.io/address/0xB6339f598637Da7f94d63fa422BD8888dCddbEB6#code)  
 [BalancerPoolToken.sol](https://rinkeby.etherscan.io/address/0xA9a7C8461f3F5DA503Cd0778Ff511CeB3d10c77B#code)  
+
+## Acknowledgements  
+
+This submission used scaffold-eth which provides a solid foundation for fast contract development and iteration. [The main scaffold-eth Github repo can be found here](https://github.com/scaffold-eth/scaffold-eth).  
+
 

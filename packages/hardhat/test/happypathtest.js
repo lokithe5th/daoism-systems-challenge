@@ -46,7 +46,8 @@ describe("Voting Dapp, Happy Path Simulation:", function () {
     describe("setup()", function () {
       it("Should setup safe", async function () {
         const [owner, address1, address2] = await ethers.getSigners();
-
+        //  This sets up the safe with the first hardhat network address as the "owner", the Safe threshold as 1, the value as 0 in bytes (0x30), ...
+        //  ...the payment token as "BPT" and the recpient as "owner"
         await gnosisSafe.setup([owner.address], 1, owner.address, 0x30, voting.address, balancerPoolToken.address, 0, owner.address);
         expect(await gnosisSafe.getOwners())
           .to.have.members([owner.address]);     
