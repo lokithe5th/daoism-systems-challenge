@@ -37,9 +37,9 @@ contract Voting {
     }
 
     //  Mapping of index => address => weight
-    mapping(uint256 => mapping(address => uint256)) internal votesByProposalIndexByStaker;
-    mapping(uint256 => uint256) internal votesForProposalByIndex;
-    mapping(uint256 => uint256) internal votesAgainstProposalByIndex;
+    mapping(uint256 => mapping(address => uint256)) private votesByProposalIndexByStaker;
+    mapping(uint256 => uint256) private votesForProposalByIndex;
+    mapping(uint256 => uint256) private votesAgainstProposalByIndex;
 
     /// Array of Proposal structs
     Proposal[] public proposals;
@@ -119,16 +119,22 @@ contract Voting {
             return false;
         }
 
-    function countVotes(uint256 proposalIndex, uint8 voteType) internal {
-        if (voteType == 0) {
-                votesByProposalIndexByStaker[proposalIndex][msg.sender] = balancerPoolToken.balanceOf(msg.sender);
-                votesForProposalByIndex[proposalIndex] = balancerPoolToken.balanceOf(msg.sender);
-            } else {
-                votesByProposalIndexByStaker[proposalIndex][msg.sender] = balancerPoolToken.balanceOf(msg.sender);
-                votesAgainstProposalByIndex[proposalIndex] = balancerPoolToken.balanceOf(msg.sender);
-            }
+    /// @notice Internal function for counting and allocating votes
+    /// @param  proposalIndex Index of the proposal being voted on
+    /// @param  voteType:uint8 representing the execution path to follow
+    function countVotes(
+        uint256 proposalIndex, 
+        uint8 voteType
+        ) internal {
+            if (voteType == 0) {
+                    votesByProposalIndexByStaker[proposalIndex][msg.sender] = balancerPoolToken.balanceOf(msg.sender);
+                    votesForProposalByIndex[proposalIndex] = balancerPoolToken.balanceOf(msg.sender);
+                } else {
+                    votesByProposalIndexByStaker[proposalIndex][msg.sender] = balancerPoolToken.balanceOf(msg.sender);
+                    votesAgainstProposalByIndex[proposalIndex] = balancerPoolToken.balanceOf(msg.sender);
+                }
 
-            emit voted(proposalIndex, msg.sender, balancerPoolToken.balanceOf(msg.sender), voteType);
+                emit voted(proposalIndex, msg.sender, balancerPoolToken.balanceOf(msg.sender), voteType);
     }
 
     /// @notice Executes a proposal once vote > 50% of totalSupply
