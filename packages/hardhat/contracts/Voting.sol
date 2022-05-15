@@ -20,6 +20,9 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 contract Voting {
     event newProposal(uint256 proposalIndex);
     event voted(uint256 proposalIndex, address voter, uint256 votes, uint8 voteType);
+    event proposalPassed(uint256 proposalIndex);
+    event proposalFailed(uint256 proposalIndex);
+    event proposalExecuted(uint256 proposalIndex);
     event addSigner(address newSigner);
     event removeSigner(address removedSigner);
 
@@ -110,10 +113,12 @@ contract Voting {
             if (votesForProposalByIndex[proposalIndex] >= (balancerPoolToken.totalSupply()/2)) {
                 require(executeProposal(proposalIndex), "execution failed");
                 proposals[proposalIndex].passed = true;
+                emit proposalPassed(proposalIndex);
                 return true;
             //  If total against votes >50%, set voteEnded = true, passed remains false as per default value
             } else if (votesAgainstProposalByIndex[proposalIndex] > (balancerPoolToken.totalSupply()/2)) {
                 proposals[proposalIndex].voteEnded = true;
+                emit proposalFailed(proposalIndex);
                 return false;
             }
             return false;
