@@ -7,7 +7,7 @@ pragma solidity >=0.8.0 <0.9.0;
 /// @dev    **NOT FOR PRODUCTION USE** 
 /// @dev    This contract is part of a technical challenge for Daoism Systems, it has not been audited.
 
-//Preferred method of making calls, but to allow arbitrary proposal execution
+//Preferred method of making calls
 interface IGnosis {
     function getOwners() external;
     function addOwnerWithThreshold(address owner, uint256 _threshold) external;
