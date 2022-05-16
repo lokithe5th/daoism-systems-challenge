@@ -34,7 +34,7 @@ contract Voting {
         uint8 action;       // 0 -> addSigner, 1 -> removeSigner, 2 -> arbitrary tx
         uint256 voteCount;  // Number of votes cast
         uint256 value;      // Value to be paid, 0 for action == 0 || == 1
-        string proposal;    // Bytes representation of proposal, 0x30 if action == 0 || == 1
+        string proposal;    // String summary of proposal
         bool passed;        // false -> unsuccessful, true -> successfull and executed
         bool voteEnded;     // Vote has ended. If voteEnded == true && passed == false, vote was unsuccessful
     }
