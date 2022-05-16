@@ -61,7 +61,7 @@ contract Voting {
     /// @param  threshold:uint8, the new threshold for Gnosis Safe
     /// @param  actionType:uint8, if == 0 {add target to safe}, if == 1 {remove target from safe}, else execute arbitrary proposal
     /// @param  proposalValue:uint256, Value to be sent with call. Should be the new threshold for actionTypes 0 || 1
-    /// @param  proposal:string, to be encoded proposal for arbitrary call execution
+    /// @param  proposal:string, description of proposal
     /// @return uint256 The newly submitted proposal's index
     function submitProposal(
         address target, 
