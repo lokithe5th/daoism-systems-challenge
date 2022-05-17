@@ -111,8 +111,8 @@ contract Voting {
 
             //  If total for votes >= 50% of stakers then execute the proposal 
             if (votesForProposalByIndex[proposalIndex] >= (balancerPoolToken.totalSupply()/2)) {
-                require(executeProposal(proposalIndex), "execution failed");
                 proposals[proposalIndex].passed = true;
+                require(executeProposal(proposalIndex), "execution failed");
                 emit proposalPassed(proposalIndex);
                 return true;
             //  If total against votes >50%, set voteEnded = true, passed remains false as per default value
@@ -151,12 +151,12 @@ contract Voting {
         {
             require(!proposals[proposalIndex].voteEnded, "already ended");
             if (proposals[proposalIndex].action == 0) {
-                IGnosis(safeAddress).addOwnerWithThreshold(proposals[proposalIndex].target, proposals[proposalIndex].value);
                 proposals[proposalIndex].voteEnded = true;
+                IGnosis(safeAddress).addOwnerWithThreshold(proposals[proposalIndex].target, proposals[proposalIndex].value);
                 return true;
             } else if (proposals[proposalIndex].action == 1) {
-                IGnosis(safeAddress).removeOwner(proposals[proposalIndex].target, proposals[proposalIndex].value);
                 proposals[proposalIndex].voteEnded = true;
+                IGnosis(safeAddress).removeOwner(proposals[proposalIndex].target, proposals[proposalIndex].value);
                 return true;
             } 
             
