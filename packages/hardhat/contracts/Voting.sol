@@ -32,11 +32,11 @@ contract Voting {
 
     struct Proposal {
         address target;     // Address to be removed, added, or called
-        uint8 action;       // 0 -> addSigner, 1 -> removeSigner, 2 -> arbitrary tx
+        uint8 action;       // 0 -> addSigner, 1 -> removeSigner, 2 -> arbitrary tx (can be added in the future)
         uint256 voteCount;  // Number of votes cast
         uint256 value;      // Value to be paid, 0 for action == 0 || == 1
         string proposal;    // String summary of proposal
-        bool passed;        // false -> unsuccessful, true -> successfull and executed
+        bool passed;        // false -> unsuccessful, true -> successful and executed
         bool voteEnded;     // Vote has ended. If voteEnded == true && passed == false, vote was unsuccessful
     }
 
@@ -61,7 +61,7 @@ contract Voting {
     /// @param  target:address to be added, removed or called
     /// @param  threshold:uint8, the new threshold for Gnosis Safe
     /// @param  actionType:uint8, if == 0 {add target to safe}, if == 1 {remove target from safe}, later can allow arbitrary proposal execution or other set function calls
-    /// @param  proposalValue:uint256, Value to be sent with call. Should be the new threshold for actionTypes 0 || 1
+    /// @param  proposalValue:uint256, Value to be sent with call. 
     /// @param  proposal:string, description of proposal
     /// @return uint256 The newly submitted proposal's index
     function submitProposal(
