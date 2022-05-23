@@ -133,12 +133,12 @@ contract Voting {
         uint256 proposalIndex, 
         uint8 voteType
         ) internal {
+            votesByProposalIndexByStaker[proposalIndex][msg.sender] = balancerPoolToken.balanceOf(msg.sender);
+            
             if (voteType == 0) {
-                    votesByProposalIndexByStaker[proposalIndex][msg.sender] = balancerPoolToken.balanceOf(msg.sender);
-                    votesForProposalByIndex[proposalIndex] = balancerPoolToken.balanceOf(msg.sender);
+                    votesForProposalByIndex[proposalIndex] += balancerPoolToken.balanceOf(msg.sender);
                 } else {
-                    votesByProposalIndexByStaker[proposalIndex][msg.sender] = balancerPoolToken.balanceOf(msg.sender);
-                    votesAgainstProposalByIndex[proposalIndex] = balancerPoolToken.balanceOf(msg.sender);
+                    votesAgainstProposalByIndex[proposalIndex] += balancerPoolToken.balanceOf(msg.sender);
                 }
 
                 emit voted(proposalIndex, msg.sender, balancerPoolToken.balanceOf(msg.sender), voteType);
