@@ -146,6 +146,7 @@ contract Voting {
 
     /// @notice Executes a proposal once vote > 50% of totalSupply
     /// @param  proposalIndex:uint256, index of the proposal to be executed
+    /// @dev    Limited to add and remove functions for now, but can be extended for other function calls
     function executeProposal(
         uint256 proposalIndex
         ) 
